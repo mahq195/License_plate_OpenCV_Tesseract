@@ -5,6 +5,7 @@ import numpy as np
 import imutils
 from four_points_transform import four_points_transform
 import pytesseract as pt
+import os, glob2
 
 
 # %%
@@ -56,7 +57,7 @@ def get_plate(image):
         v4 = location[3][0]
         points =  np.array([v1, v2, v3, v4])
         cropped_image = four_points_transform(gray, points)
-        # cv2.imshow('croped-image', cropped_image)
+        cv2.imshow('croped-image', cropped_image)
     
     return cropped_image, points
 
@@ -95,7 +96,8 @@ def read_plate(binary_img):
 
 ##############################################
 
-path = r'GreenParking\0014_02176_b.jpg'
+
+path = r'test\0019_01137_b.jpg'
 image = cv2.imread(path)
 cv2.imshow('original', image)
 
@@ -115,5 +117,24 @@ if cropped_plate is not None:
 cv2.waitKey(0) 
 cv2.destroyAllWindows()
 
+# def loop():
+#     image_paths = glob2.glob('.\GreenParking' + '\*.jpg')
+#     print('image_paths:', image_paths)
+#     detected = []
+#     for path in image_paths:
+#         image = cv2.imread(path)
+#         (cropped_plate, points) = get_plate(image)
+#         if cropped_plate is not None:
+#             file_name = os.path.basename(path)
+#             detected.append(file_name)
+    
+#     return detected
 
+# result = loop()
 
+# print(result)
+# print('Len result: ', len(result))
+
+# result = np.array(result)
+# np.save('result', result)
+    
