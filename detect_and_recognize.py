@@ -27,24 +27,24 @@ def get_plate(image):
     cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:10]
 
 
-    location = 0
+    location = None
     cropped_image = None
     points = None
     for cnt in cnts:
         peri = cv2.arcLength(cnt, True)
         # print(peri)
         approx = cv2.approxPolyDP(cnt, 0.05*peri , True)
-        if len(approx) == 4 and cv2.contourArea(cnt) > 2500:
+        if len(approx) == 4 and cv2.contourArea(cnt) > 3000:
             location = approx
             break
     
-    if len(location) ==0: 
+    if location is None: 
         print("No plate detected!")
         cv2.rectangle(image, (0,0), (165,35), (255,255,255), -1)
         cv2.putText(image, 'Can\'t detect plate!', (2,25), cv2.FONT_HERSHEY_PLAIN, 1, (0,0,255), 2)
         cv2.imshow('result', image)
 
-    elif len(location) !=0:
+    elif location is not None:
         mask = np.zeros(gray.shape, np.uint8)
         new_image = cv2.drawContours(mask, [location], 0, 255, -1, )
         new_image = cv2.bitwise_and(image, image, mask=mask)
@@ -83,16 +83,19 @@ def read_plate(binary_img):
     low_part = binary_img[:][int(binary_img.shape[1]/2.5):]
 
     pt.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-    text_high = pt.image_to_string(high_part,  config='-c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ --psm 13 --oem 3')
+    high = pt.image_to_string(high_part, lang ='eng',config ='--oem 3 --psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
+    text_high = "".join(high.split()).replace(":", "").replace("-", "")
+    # print(filter_new_predicted_result_GWT2180)
+    # text_high = pt.image_to_string(high_part,  config='--oem 3 --psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
     text_low = pt.image_to_string(low_part,  config='-c tessedit_char_whitelist=0123456789 --psm 8 --oem 3')
-    text = text_high[:-1]+' '+text_low[:-1]
+    text = text_high+' '+text_low[:-1]
     print(text)
     return text
 
 
 ##############################################
 
-path = r'GreenParking\0000_05696_b.jpg'
+path = r'GreenParking\0014_02176_b.jpg'
 image = cv2.imread(path)
 cv2.imshow('original', image)
 
