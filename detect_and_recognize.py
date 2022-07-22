@@ -17,6 +17,7 @@ import os, glob2
 
 def get_plate(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # cv2.imshow('gray', gray)
     blured = cv2.bilateralFilter(gray, 11, 17, 17)
     ret,th1 = cv2.threshold(blured,150,255,cv2.THRESH_BINARY)
     edged = cv2.Canny(th1, 100, 200)
@@ -57,7 +58,7 @@ def get_plate(image):
         v4 = location[3][0]
         points =  np.array([v1, v2, v3, v4])
         cropped_image = four_points_transform(gray, points)
-        cv2.imshow('croped-image', cropped_image)
+        cv2.imshow('croped-image', cv2.resize(cropped_image, (0,0), fx=3, fy=3))
     
     return cropped_image, points
 
@@ -68,6 +69,7 @@ def binarize(plate_img):
     gray = cv2.medianBlur(gray, 3)
     
     ret, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY)
+    # cv2.imshow('threshold', thresh)
 
     cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnt = cnts[0] if len(cnts) == 2 else cnts[1]
@@ -86,8 +88,6 @@ def read_plate(binary_img):
     pt.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
     high = pt.image_to_string(high_part, lang ='eng',config ='--oem 3 --psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
     text_high = "".join(high.split()).replace(":", "").replace("-", "")
-    # print(filter_new_predicted_result_GWT2180)
-    # text_high = pt.image_to_string(high_part,  config='--oem 3 --psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
     text_low = pt.image_to_string(low_part,  config='-c tessedit_char_whitelist=0123456789 --psm 8 --oem 3')
     text = text_high+' '+text_low[:-1]
     print(text)
@@ -97,44 +97,28 @@ def read_plate(binary_img):
 ##############################################
 
 
-path = r'test\0019_01137_b.jpg'
-image = cv2.imread(path)
-cv2.imshow('original', image)
 
-(cropped_plate, points) = get_plate(image)
-if cropped_plate is not None:
-    binary_plate = binarize(cropped_plate)
-    text = read_plate(binary_plate)
+def main(path):
+    # path = str(input('Your image path: '))
+    image = cv2.imread(path)
+    cv2.imshow('original', image)
 
-    cv2.line(image, points[0], points[1], (0,255,0), 3)
-    cv2.line(image, points[1], points[2], (0,255,0), 3)
-    cv2.line(image, points[2], points[3], (0,255,0), 3)
-    cv2.line(image, points[3], points[0], (0,255,0), 3)
-    cv2.rectangle(image, (0,0), (160,35), (255,255,255), -1)
-    cv2.putText(image, text, (3,25), cv2.FONT_HERSHEY_PLAIN, 1.5, (0,0,0), 2)
-    cv2.imshow('result', image)
+    (cropped_plate, points) = get_plate(image)
+    if cropped_plate is not None:
+        binary_plate = binarize(cropped_plate)
+        text = read_plate(binary_plate)
 
-cv2.waitKey(0) 
-cv2.destroyAllWindows()
+        cv2.line(image, points[0], points[1], (0,255,0), 3)
+        cv2.line(image, points[1], points[2], (0,255,0), 3)
+        cv2.line(image, points[2], points[3], (0,255,0), 3)
+        cv2.line(image, points[3], points[0], (0,255,0), 3)
+        cv2.rectangle(image, (0,0), (160,35), (255,255,255), -1)
+        cv2.putText(image, text, (10,25), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,0,0), 1)
+        cv2.imshow('result', image)
 
-# def loop():
-#     image_paths = glob2.glob('.\GreenParking' + '\*.jpg')
-#     print('image_paths:', image_paths)
-#     detected = []
-#     for path in image_paths:
-#         image = cv2.imread(path)
-#         (cropped_plate, points) = get_plate(image)
-#         if cropped_plate is not None:
-#             file_name = os.path.basename(path)
-#             detected.append(file_name)
-    
-#     return detected
+    cv2.waitKey(0) 
+    cv2.destroyAllWindows()
 
-# result = loop()
+path = r'test\0515_07185_b.jpg'
+main(path)
 
-# print(result)
-# print('Len result: ', len(result))
-
-# result = np.array(result)
-# np.save('result', result)
-    
