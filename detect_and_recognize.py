@@ -1,18 +1,13 @@
 # %%
+from pathlib import Path
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import imutils
 from four_points_transform import four_points_transform
 import pytesseract as pt
-import os, glob2
 
 
-# %%
-# def show(image):
-#     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-#     plt.imshow(image)
-#     plt.axis('off')
 
 
 def get_plate(image):
@@ -57,10 +52,12 @@ def get_plate(image):
         v3 = location[2][0]
         v4 = location[3][0]
         points =  np.array([v1, v2, v3, v4])
-        cropped_image = four_points_transform(gray, points)
+        cropped_image, order_points = four_points_transform(gray, points) # get bird-eye view
         cv2.imshow('croped-image', cv2.resize(cropped_image, (0,0), fx=3, fy=3))
-    
-    return cropped_image, points
+        
+        ord_points = [list(map(int, point)) for point in order_points]
+        # print(order_points)
+    return cropped_image, ord_points
 
 
 def binarize(plate_img):
@@ -69,7 +66,7 @@ def binarize(plate_img):
     gray = cv2.medianBlur(gray, 3)
     
     ret, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY)
-    # cv2.imshow('threshold', thresh)
+    cv2.imshow('threshold', thresh)
 
     cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnt = cnts[0] if len(cnts) == 2 else cnts[1]
@@ -79,7 +76,7 @@ def binarize(plate_img):
     result = cv2.bitwise_or(thresh, mask2)
 
     cv2.imshow('binary image', result)
-    return result
+    return thresh
 
 def read_plate(binary_img):
     high_part =binary_img[:][:int(binary_img.shape[1]/2.2)]
@@ -119,6 +116,6 @@ def main(path):
     cv2.waitKey(0) 
     cv2.destroyAllWindows()
 
-path = r'test\0515_07185_b.jpg'
+path = r'test_images\0000_00532_b.jpg'
 main(path)
 
